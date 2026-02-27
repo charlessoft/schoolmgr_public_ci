@@ -207,62 +207,62 @@ jobs:
           
           # 编译
           
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_server.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_server.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
           # 编译agent
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_agent.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_agent.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
           # 发布
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_server.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_server.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
-          ## 注释 bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_agent.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          ## 注释 bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_agent.sh ${JENKINS_ENV_PATH} || CheckLastResult
           echo "build web system======="
           # 编译web 系统
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_web.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
           echo "publish web system======>"
           # 发布web系统
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_web.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
           # 编译h5 web 系统
           echo "build h5 web system======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_h5_web.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_h5_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
           # 发布h5 web系统
           echo "publish web system======>"
           find . -type f -name '*lock*' -print -exec rm {} \;
 
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_h5_web.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_h5_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
           
           # 部署测试环境
           echo "deploy dev environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/develop/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/develop/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
           # ---end
           
           # 麦小
           echo "部署麦小"
           echo "docker_deploy md environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/maixiao/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/maixiao/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
           
           # 部署 观澜 old
           echo "部署观澜小学 old"
           echo "docker_deploy gl old environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan_old/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan_old/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
           # 观澜
           echo "部署观澜小学"
           echo "docker_deploy gl  environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
           #------
           
           # 英才
           echo "部署英才小学"
           echo "docker_deploy yc  environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/yingcai/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/yingcai/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
 
         working-directory: ./${{ github.event.client_payload.project_name }}
