@@ -163,7 +163,7 @@ jobs:
           cd ${UTILS_DIR}
           source utils.sh
           popd 
-          bash /tmp/myutils/schoolmgr_schedule/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          bash /tmp/myutils/schoolmgr/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
 
 
