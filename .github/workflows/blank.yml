@@ -1,0 +1,630 @@
+name: schoolmgr
+
+
+on:
+  repository_dispatch:
+    types:
+      - schoolmgr_public_ci
+  push:
+    branches: [ '*' ]
+  pull_request:
+  # release:
+  #   types: [ created, edited ]
+  workflow_dispatch:
+    inputs:
+      gva_version:
+        required: true
+        type: string
+# env:
+  # sss
+env:
+  TZ: Asia/Shanghai
+jobs:
+  init:
+    if: github.repository_owner == 'charlessoft'
+    # runs-on: ubuntu-latest
+    runs-on: macos-latest
+    steps:
+      - name: init
+        run: |
+          echo "charlessoft"
+          echo "${{ toJson(github.event.client_payload) }}"
+          echo "charlessoft11"
+          echo "${{ toJson(github.event.client_payload) }}" > client_payload.json
+
+
+
+  frontend:
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'release'  || github.event_name == 'repository_dispatch'
+    name: Frontend node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.20.4]
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+          
+      - name: Setup SSH Key
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          cat ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+
+      - name: Cache SSH known hosts
+        id: cache-ssh-hosts
+        uses: actions/cache@v3
+        with:
+          path: ~/.ssh/known_hosts
+          key: ssh-known-hosts-${{ runner.os }}-v1
+          restore-keys: |
+            ssh-known-hosts-${{ runner.os }}-
+
+      - name: Add Gitee ssh-key to known hosts
+        shell: bash
+        run: |
+          mkdir -p $HOME/.ssh
+          cat >$HOME/.ssh/known_hosts <<Eof
+            gitee.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMzG3r+88lWSDK9fyjcZmYsWGDBDmGoAasKMAmjoFloGt9HRQX2Qp4f9FY2XK/hsHYinvoh5Xytl9iaUNUWMfYR8q6VEMtOO87DgoAFcfKZHt0/nbAg9RoNTKYt6v8tPwYpr7N0JP/01nE4LFsNDnstr6H0bXSAzbKWCETLZfdPV4l2uSpRn3bU0ugoZ0aSKz5Dc/IloBfGCTvkSsxUydMRd/Chpjt6VxncDbp+Fa6pzsseK8OQzrg6Fgc5783EN3EQqZ2skqyCwExtx95BJlfx1B3luZnWfpkwNDnrZRT/Qx0OrWqyf0q6f9uQr+UG1S8qDcUn3e/9onq3rwBri8/
+            gitee.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMuEoYdx6to5oxR60IWj8uoe1aI0X1fKOHWOtLqTg1tsLT1iFwXV5JmFjU46EzeMBV/6EmI1uaRI6HiEPtPtJHE=
+            gitee.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEKxHSJ7084RmkJ4YdEi5tngynE8aZe2uEoVVsB/OvYN
+          Eof
+
+      - name: Install dding on non-Windows
+        if: runner.os != 'Windows'
+        run: |
+          pip install dding
+          mkdir -p ~/.dding
+          dding_secret="${{ github.event.client_payload.secret || env.DEFAULT_DDING_SECRET }}"
+          dding_token="${{ github.event.client_payload.token || env.DEFAULT_DDING_TOKEN }}"
+          cat <<EOF > ~/.dding/config.json
+          [
+              {
+                  "group": "default",
+                  "secret": "$dding_secret",
+                  "token": "$dding_token"
+              }
+          ]
+          EOF
+      
+      - name: Install dding on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pip install dding
+          New-Item -Path $HOME\.dding -ItemType Directory -Force
+          $dding_secret = "${{ github.event.client_payload.secret || env.DEFAULT_DDING_SECRET }}"
+          $dding_token = "${{ github.event.client_payload.token || env.DEFAULT_DDING_TOKEN }}"
+          $config = @"
+          [
+              {
+                  "group": "default",
+                  "secret": "$dding_secret",
+                  "token": "$dding_token"
+              }
+          ]
+          "@
+          $config | Out-File -FilePath $HOME\.dding\config.json -Encoding utf8
+          
+
+      - name: Get current branch name
+        id: get_branch
+        run: |
+          echo "BRANCH_NAME=$(echo ${{ github.event.client_payload.mybranch }} | sed 's|refs/heads/||')"  >> $GITHUB_ENV
+          echo "BRANCH=$(echo ${{ github.event.client_payload.mybranch }} | sed 's|refs/heads/||')"  >> $GITHUB_ENV
+          # echo "BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+          # echo "BRANCH_NAME=master" >> $GITHUB_ENV
+          # echo "UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils" >> $GITHUB_ENV
+          echo "UTILS_DIR=/tmp/myutils" >> $GITHUB_ENV
+          echo "WORK_ROOT_DIR=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
+          echo "WORKSPACE=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
+          echo "JENKINS_ENV_PATH=/tmp/.JENKINS.env" >> $GITHUB_ENV
+          # echo "JENKINS_ENV_PATH=${PWD}/${{github.event.client_payload.project_name}}/.JENKINS.env" >> $GITHUB_ENV
+          echo "RELEASE_PACKAGE=123.60.164.114" >> $GITHUB_ENV 
+          echo "JAVA_SSO_PACKAGE=sso-1.0.1.jar"  >> $GITHUB_ENV
+          echo "ISDEBUG=${{github.event.client_payload.isdebug}}" >> $GITHUB_ENV
+          
+
+      - name: Generate JENKINS.env
+        run: |
+          echo "export BRANCH=$BRANCH " >> $JENKINS_ENV_PATH
+          echo "export UTILS_DIR=$UTILS_DIR" >> $JENKINS_ENV_PATH
+          echo "export WORK_ROOT_DIR=$WORK_ROOT_DIR" >> $JENKINS_ENV_PATH
+          if [ "$ISDEBUG" = "true" ]; then
+            echo "============ JENKINS.env Content ============"
+            cat $WORK_ROOT_DIR/.JENKINS.env
+            echo "============================================="
+          fi     
+        # working-directory: ./${{ github.event.client_payload.project_name }}
+          
+      # - name: Setup SSH Key
+      #   env:
+      #     SSH_KEY: ${{ github.event.client_payload.ssh_keys[0] }}
+      #   run: |
+      #     mkdir -p ~/.ssh/
+      #     echo "$SSH_KEY" > ~/.ssh/id_rsa
+      #     chmod 600 ~/.ssh/id_rsa
+      #     ssh-keyscan github.com >> ~/.ssh/known_hosts
+      #     ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+
+      - name: git clone 
+        run: |
+          export UTILS_DIR=/tmp/myutils
+          git clone git@github.com:charlessoft/myutils.git ${UTILS_DIR}
+          pushd .
+          echo ${UTILS_DIR}
+          cd ${UTILS_DIR}
+          source utils.sh
+          popd 
+          bash /tmp/myutils/schoolmgr_schedule/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
+
+
+
+      - name: Generate  env 
+        run: |
+          export UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils
+          echo "UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils" >> $GITHUB_ENV
+          echo "export UTILS_DIR=$UTILS_DIR" >> $JENKINS_ENV_PATH
+
+
+      - name: build
+        run: |
+          pushd .
+          cd ${UTILS_DIR}
+          source utils.sh
+          popd 
+
+
+          pwd
+          ls
+          echo "========="
+          cd ${UTILS_DIR}
+          source utils.sh
+          cd -
+
+          pnpm config set registry https://registry.npmjs.org
+          pnpm config get registry
+          # ----- begin
+          
+          # 编译
+          
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_server.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          # 编译agent
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_agent.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          # 发布
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_server.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          ## 注释 bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_agent.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          echo "build web system======="
+          # 编译web 系统
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_web.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+
+          echo "publish web system======>"
+          # 发布web系统
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_web.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          # 编译h5 web 系统
+          echo "build h5 web system======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/build_h5_web.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          # 发布h5 web系统
+          echo "publish web system======>"
+          find . -type f -name '*lock*' -print -exec rm {} \;
+
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_h5_web.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          
+          # 部署测试环境
+          echo "deploy dev environment ======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/develop/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+
+          # ---end
+          
+          # 麦小
+          echo "部署麦小"
+          echo "docker_deploy md environment ======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/maixiao/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+
+          
+          # 部署 观澜 old
+          echo "部署观澜小学 old"
+          echo "docker_deploy gl old environment ======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan_old/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          # 观澜
+          echo "部署观澜小学"
+          echo "docker_deploy gl  environment ======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+
+          #------
+          
+          # 英才
+          echo "部署英才小学"
+          echo "docker_deploy yc  environment ======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/yingcai/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+
+
+        working-directory: ./${{ github.event.client_payload.project_name }}
+
+
+          # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/build_server.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # # 编译agent
+          # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/build_agent.sh ${JENKINS_ENV_PATH} || CheckLastResult
+                    
+
+      #     pnpm config set registry https://registry.npmjs.org
+      #     pnpm config get registry
+
+      #     # #==============
+      #     # 编译
+
+      #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/build_server.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          
+      #     # 编译agent
+      #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/build_agent.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+      #     # 发布
+      #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/publish_server.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+      #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/publish_agent.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+
+      
+
+      - name: publish action
+        env:
+          GH_TOKEN: ${{ secrets.EXTGITHUB_TOKEN }}
+        run: |
+          pushd .
+          cd ${UTILS_DIR}
+          source utils.sh
+          popd 
+          
+          bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/publish_server.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          
+          bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/publish_agent.sh ${JENKINS_ENV_PATH} || CheckLastResult
+      
+
+
+
+
+          
+      # - name: Clone ${{  github.event.client_payload.project_name }}
+      #   run: |
+      #     # 提取分支名称（去掉 refs/heads/ 前缀）
+      #     BRANCH_NAME=$(echo "${{ github.event.client_payload.mybranch }}" | sed 's|refs/heads/||')
+      #     echo "切换到分支: $BRANCH_NAME"
+          
+      #     # 克隆仓库
+      #     git clone ${{ github.event.client_payload.gitaddress }} ./${{  github.event.client_payload.project_name }}
+          
+      #     # 进入项目目录并切换分支
+      #     cd ./${{  github.event.client_payload.project_name }}
+          
+      #     # 如果是远程分支，先获取所有分支信息
+      #     git fetch origin
+          
+      #     # 切换到指定分支（如果分支不存在会自动创建并跟踪远程分支）
+      #     git checkout -B $BRANCH_NAME origin/$BRANCH_NAME || git checkout $BRANCH_NAME
+
+      #     # 初始化并更新子模块
+      #     git submodule init
+      #     git submodule update
+      #     # 返回上级目录
+      #     cd ..
+          
+      #     # 克隆 myutils
+      #     git clone git@gitee.com:charlesabc/myutils.git ./${{  github.event.client_payload.project_name }}/myutils
+
+          
+      #    # # BRANCH_NAME=$(echo "${{ github.event.client_payload.mybranch }}" | sed 's|refs/heads/||')
+      #    # # echo $BRANCH_NAME
+      #    # git clone  ${{ github.event.client_payload.git_url }} ./${{  github.event.client_payload.project_name }}
+      #    # git clone git@gitee.com:charlesabc/myutils.git ./${{  github.event.client_payload.project_name }}/myutils
+
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # cache: 'pnpm'
+          
+      # - uses: pnpm/action-setup@v4
+      #   name: Install pnpm
+      #   with:
+      #     version: 10
+      #     run_install: false
+
+      # - name: Install Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: ${{ matrix.node-version }}
+          # cache: 'pnpm'
+          
+          
+      # - name: Use Node.js ${{ matrix.node-version }}
+      #   uses: actions/setup-node@v1
+      #   with:
+      #     node-version: ${{ matrix.node-version }}
+
+      # - name: Install pnpm
+      #   run: |
+      #     npm install -g pnpm
+      #     pnpm config set registry https://registry.npmjs.org
+        
+
+      # - name: Set SSH
+      #   run: |
+      #     # 提取第一个 SSH key
+      #     FIRST_KEY=$(echo "${{ toJson(github.event.client_payload.ssh_keys) }}" | jq -r '.[0]')
+          
+      #     # 创建 .ssh 目录并保存 SSH key
+      #     mkdir -p ~/.ssh/
+      #     echo "$FIRST_KEY" > ~/.ssh/id_rsa
+      #     chmod 600 ~/.ssh/id_rsa
+          
+      #     # 添加 GitHub 到 known_hosts
+      #     ssh-keyscan github.com >> ~/.ssh/known_hosts
+  
+  #     - name: Set SSH
+  #       env:
+  #         KEY: ${{ secrets.SSH_KEY }}
+  #       run: |
+  #         echo $KEY
+  #         mkdir -p ~/.ssh/ && echo "$KEY" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+  #         ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+
+   
+
+
+
+      - name: Install dding on non-Windows
+        if: runner.os != 'Windows'
+        run: |
+          pip install dding
+          mkdir -p ~/.dding
+          dding_secret="${{ github.event.client_payload.secret || env.DEFAULT_DDING_SECRET }}"
+          dding_token="${{ github.event.client_payload.token || env.DEFAULT_DDING_TOKEN }}"
+          cat <<EOF > ~/.dding/config.json
+          [
+              {
+                  "group": "default",
+                  "secret": "$dding_secret",
+                  "token": "$dding_token"
+              }
+          ]
+          EOF
+          
+      # - name: Get current branch name
+      #   id: get_branch1
+      #   run: |
+      #     echo "BRANCH=${{ github.event.client_payload.mybranch }}" >> $GITHUB_ENV
+      #     echo "UTILS_DIR=${PWD}/${{ github.event.client_payload.project_name }}/myutils" >> $GITHUB_ENV
+      #     echo "WORK_ROOT_DIR=${PWD}/${{  github.event.client_payload.project_name }}" >> $GITHUB_ENV
+      #     echo "==========="
+      #     echo $(git rev-parse --abbrev-ref HEAD)
+      #     echo "==========="
+
+      - name: Generate JENKINS.env
+        run: |
+          echo "export BRANCH=$BRANCH " >> $WORK_ROOT_DIR/.JENKINS.env
+          echo "export UTILS_DIR=$UTILS_DIR" >> $WORK_ROOT_DIR/.JENKINS.env
+          echo "export WORK_ROOT_DIR=$WORK_ROOT_DIR" >> $WORK_ROOT_DIR/.JENKINS.env
+          cat $WORK_ROOT_DIR/.JENKINS.env
+        working-directory: ./${{ github.event.client_payload.project_name }}
+
+  #     - name: Generate git commit
+  #       run: |
+  #          bash $WORK_ROOT_DIR/myutils/quickspider/scripts/build_web.sh $WORK_ROOT_DIR/.JENKINS.env
+      # - name: Setup Debug Session
+      #   uses: csexton/debugger-action@master
+
+      - name: Set Go proxy
+        run: echo "GOPROXY=https://proxy.golang.org,direct" >> $GITHUB_ENV
+
+
+        
+
+      # - name: Build test
+      #   shell: bash
+      #   run: |
+      #     pwd
+      #     ls
+      #     echo "========="
+      #     cd ${UTILS_DIR}
+      #     source ${UTILS_DIR}/utils.sh
+      #     cd -
+
+          
+
+      #     pnpm config set registry https://registry.npmjs.org
+      #     pnpm config get registry
+
+      #     # #==============
+      #     # 编译
+
+      #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/build_server.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          
+      #     # 编译agent
+      #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/build_agent.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+      #     # 发布
+      #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/publish_server.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+      #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/publish_agent.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+          
+      #     # 部署
+      #     bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/guanlan/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+      #     # 部署angent
+      #     # bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/generate_deploy_agent.sh $WORK_ROOT_DIR/.JENKINS.env guanlan || CheckLastResult
+
+      #     # # 部署 英才
+      #     # # #echo "yingcai==="
+      #     # bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/yingcai/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+          
+      #     # # 部署angent
+      #     # bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/generate_deploy_agent.sh $WORK_ROOT_DIR/.JENKINS.env yingcai || CheckLastResult
+          
+          
+      #     # # 部署angent
+      #     # #sh ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/generate_deploy_agent.sh $WORK_ROOT_DIR/.JENKINS.env sanlong_node || CheckLastResult
+          
+      #     # #echo ${BRANCH_NAME}
+      #     # echo "========================"
+
+
+      #     # bash ${WORK_ROOT_DIR}/myutils/schoolmgr_schedule/scripts/yingcai/docker_deploy.sh $WORK_ROOT_DIR/.JENKINS.env || CheckLastResult
+
+
+      #   working-directory: ./${{ github.event.client_payload.project_name }}
+
+
+      # - name: Check Status
+      #   if: ${{ success() }}
+      #   shell: pwsh
+      #   run: |
+      #     $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
+          
+      #     Write-Host "Workflow succeeded for $repoName!"
+      #     dding "github action success :):):) for ./${{ github.event.client_payload.project_name }}"
+          
+
+      # - name: Check Status
+      #   if: ${{ failure() }}
+      #   shell: pwsh
+      #   run: |
+      #     $repoName = $env:GITHUB_REPOSITORY.Split('/')[-1]
+      #     Write-Host "Workflow failed for $repoName!"
+      #     dding "github action fail!!! :( ./${{ github.event.client_payload.project_name }}"
+
+  deploy:
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'release'  || github.event_name == 'repository_dispatch'
+    runs-on: ubuntu-latest
+    needs: [frontend]
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+          
+      - name: Setup SSH Key
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          cat ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+
+      - name: Add Gitee ssh-key to known hosts
+        shell: bash
+        run: |
+          mkdir -p $HOME/.ssh
+          cat >$HOME/.ssh/known_hosts <<Eof
+            gitee.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMzG3r+88lWSDK9fyjcZmYsWGDBDmGoAasKMAmjoFloGt9HRQX2Qp4f9FY2XK/hsHYinvoh5Xytl9iaUNUWMfYR8q6VEMtOO87DgoAFcfKZHt0/nbAg9RoNTKYt6v8tPwYpr7N0JP/01nE4LFsNDnstr6H0bXSAzbKWCETLZfdPV4l2uSpRn3bU0ugoZ0aSKz5Dc/IloBfGCTvkSsxUydMRd/Chpjt6VxncDbp+Fa6pzsseK8OQzrg6Fgc5783EN3EQqZ2skqyCwExtx95BJlfx1B3luZnWfpkwNDnrZRT/Qx0OrWqyf0q6f9uQr+UG1S8qDcUn3e/9onq3rwBri8/
+            gitee.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMuEoYdx6to5oxR60IWj8uoe1aI0X1fKOHWOtLqTg1tsLT1iFwXV5JmFjU46EzeMBV/6EmI1uaRI6HiEPtPtJHE=
+            gitee.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEKxHSJ7084RmkJ4YdEi5tngynE8aZe2uEoVVsB/OvYN
+          Eof
+
+      - name: Get current branch name
+        id: get_branch
+        run: |
+          echo "BRANCH_NAME=$(echo ${{ github.event.client_payload.mybranch }} | sed 's|refs/heads/||')"  >> $GITHUB_ENV
+          echo "BRANCH=$(echo ${{ github.event.client_payload.mybranch }} | sed 's|refs/heads/||')"  >> $GITHUB_ENV
+          echo "UTILS_DIR=/tmp/myutils" >> $GITHUB_ENV
+          echo "WORK_ROOT_DIR=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
+          echo "WORKSPACE=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
+          echo "JENKINS_ENV_PATH=/tmp/.JENKINS.env" >> $GITHUB_ENV
+          echo "RELEASE_PACKAGE=123.60.164.114" >> $GITHUB_ENV 
+          echo "JAVA_SSO_PACKAGE=sso-1.0.1.jar"  >> $GITHUB_ENV
+          echo "ISDEBUG=${{github.event.client_payload.isdebug}}" >> $GITHUB_ENV
+
+      - name: git clone 
+        run: |
+          export UTILS_DIR=/tmp/myutils
+          git clone git@github.com:charlessoft/myutils.git ${UTILS_DIR}
+          pushd .
+          echo ${UTILS_DIR}
+          cd ${UTILS_DIR}
+          source utils.sh
+          popd 
+          bash /tmp/myutils/schoolmgr_schedule/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
+
+      - name: Generate  env 
+        run: |
+          export UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils
+          echo "UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils" >> $GITHUB_ENV
+          echo "export UTILS_DIR=$UTILS_DIR" >> $JENKINS_ENV_PATH
+
+      - name: deploy action
+        run: |
+          pushd .
+          cd ${UTILS_DIR}
+          source utils.sh
+          popd 
+          
+          # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/develop/deploy_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/guanlan/docker_deploy.sh  ${JENKINS_ENV_PATH} || CheckLastResult
+          bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/maixiao/docker_deploy.sh  ${JENKINS_ENV_PATH} || CheckLastResult
+
+  dingding-error:
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: ${{ failure() }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send dingding notify error
+        uses: zcong1993/actions-ding@master
+        with:
+          dingToken: ${{ github.event.client_payload.token }} #钉钉token
+          secret: ${{ github.event.client_payload.secret }}
+          body: |
+            {
+              "msgtype": "text",
+              "text": {
+                  "content": 'status:[打叉][打叉][打叉]  ${{  github.event.client_payload.project_name }} 执行失败\n提交者:  ${{ github.event.client_payload.ext.pusher.username }}\n${{ github.ref_type }}: ${{ github.event.client_payload.mybranch }}\nlog: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+             }
+             }
+            
+
+  dingding-success:
+    runs-on: ubuntu-latest
+    if: ${{ success() }}
+    needs: [deploy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send dingding notify success
+        uses: zcong1993/actions-ding@master
+        with:
+          dingToken: ${{ github.event.client_payload.token }} #钉钉token
+          secret: ${{ github.event.client_payload.secret }}
+          body: |
+            {
+             "msgtype": "text",
+             "text": {
+                 "content": 'status:[对勾][对勾][对勾][100分]  ${{ github.event.client_payload.project_name }} 执行成功\n提交者: ${{ github.event.client_payload.ext.pusher.username }}\n${{ github.ref_type }}: ${{ github.event.client_payload.mybranch }}\nlog: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+             }
+             }
+  
+        
