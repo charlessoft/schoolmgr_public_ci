@@ -588,9 +588,9 @@ jobs:
           
           
   
-          # 部署测试环境
-          echo "deploy dev environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/develop/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # # 部署测试环境
+          # echo "deploy dev environment ======>"
+          # bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/develop/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
           # ---end
           
@@ -600,28 +600,24 @@ jobs:
           bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/maixiao/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
           
-          # 部署 观澜 old
-          echo "部署观澜小学 old"
-          echo "docker_deploy gl old environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan_old/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # # 部署 观澜 old
+          # echo "部署观澜小学 old"
+          # echo "docker_deploy gl old environment ======>"
+          # bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan_old/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
-          # 观澜
-          echo "部署观澜小学"
-          echo "docker_deploy gl  environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # # 观澜
+          # echo "部署观澜小学"
+          # echo "docker_deploy gl  environment ======>"
+          # bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
-          #------
+          # #------
           
-          # 英才
-          echo "部署英才小学"
-          echo "docker_deploy yc  environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/yingcai/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # # 英才
+          # echo "部署英才小学"
+          # echo "docker_deploy yc  environment ======>"
+          # bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/yingcai/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
 
-          
-          # # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/develop/deploy_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
-          # # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/guanlan/docker_deploy.sh  ${JENKINS_ENV_PATH} || CheckLastResult
-          # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/maixiao/docker_deploy.sh  ${JENKINS_ENV_PATH} || CheckLastResult
 
   dingding-error:
     runs-on: ubuntu-latest
