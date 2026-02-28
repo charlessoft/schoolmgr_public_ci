@@ -556,6 +556,7 @@ jobs:
           echo "RELEASE_PACKAGE=123.60.164.114" >> $GITHUB_ENV 
           echo "JAVA_SSO_PACKAGE=sso-1.0.1.jar"  >> $GITHUB_ENV
           echo "ISDEBUG=${{github.event.client_payload.isdebug}}" >> $GITHUB_ENV
+       
 
       - name: git clone 
         run: |
@@ -566,8 +567,10 @@ jobs:
           cd ${UTILS_DIR}
           source utils.sh
           popd 
-          # bash /tmp/myutils/schoolmgr/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
-
+          bash /tmp/myutils/schoolmgr/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          env:
+            ISDEPLOY: 1
+            
       - name: Generate  env 
         run: |
           export UTILS_DIR=${PWD}/${{github.event.client_payload.project_name}}/myutils
