@@ -568,8 +568,8 @@ jobs:
           source utils.sh
           popd 
           bash /tmp/myutils/schoolmgr/scripts/clone_code.sh ${JENKINS_ENV_PATH} || CheckLastResult
-          env:
-            ISDEPLOY: 1
+        env:
+          ISDEPLOY: 1
             
       - name: Generate  env 
         run: |
