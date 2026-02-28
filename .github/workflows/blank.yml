@@ -235,37 +235,7 @@ jobs:
           bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/publish_h5_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
           
-          # 部署测试环境
-          echo "deploy dev environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/develop/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
-          # ---end
-          
-          # 麦小
-          echo "部署麦小"
-          echo "docker_deploy md environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/maixiao/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
-
-          
-          # 部署 观澜 old
-          echo "部署观澜小学 old"
-          echo "docker_deploy gl old environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan_old/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
-          
-          # 观澜
-          echo "部署观澜小学"
-          echo "docker_deploy gl  environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
-
-          #------
-          
-          # 英才
-          echo "部署英才小学"
-          echo "docker_deploy yc  environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/yingcai/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
-
-
-        working-directory: ./${{ github.event.client_payload.project_name }}
 
 
           # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/build_server.sh ${JENKINS_ENV_PATH} || CheckLastResult
@@ -300,10 +270,50 @@ jobs:
           cd ${UTILS_DIR}
           source utils.sh
           popd 
+
+
+          pwd
+          ls
+          echo "========="
+          cd ${UTILS_DIR}
+          source utils.sh
+          cd -
           
-          bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/publish_server.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/publish_server.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
-          bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/publish_agent.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # bash ${WORKSPACE}/myutils/schoolmgr_schedule/scripts/publish_agent.sh ${JENKINS_ENV_PATH} || CheckLastResult
+
+          # 部署测试环境
+          echo "deploy dev environment ======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/develop/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+
+          # ---end
+          
+          # 麦小
+          echo "部署麦小"
+          echo "docker_deploy md environment ======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/maixiao/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+
+          
+          # 部署 观澜 old
+          echo "部署观澜小学 old"
+          echo "docker_deploy gl old environment ======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan_old/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          
+          # 观澜
+          echo "部署观澜小学"
+          echo "docker_deploy gl  environment ======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+
+          #------
+          
+          # 英才
+          echo "部署英才小学"
+          echo "docker_deploy yc  environment ======>"
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/yingcai/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+
+
+        working-directory: ./${{ github.event.client_payload.project_name }}
       
 
 
