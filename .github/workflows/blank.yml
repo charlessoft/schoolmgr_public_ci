@@ -597,7 +597,8 @@ jobs:
           # 麦小
           echo "部署麦小"
           echo "docker_deploy md environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/maixiao/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/maixiao/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
           
           # # 部署 观澜 old
