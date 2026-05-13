@@ -432,8 +432,8 @@ jobs:
       # - name: Setup Debug Session
       #   uses: csexton/debugger-action@master
 
-      - name: Set Go proxy
-        run: echo "GOPROXY=https://proxy.golang.org,direct" >> $GITHUB_ENV
+      # - name: Set Go proxy
+      #   run: echo "GOPROXY=https://proxy.golang.org,direct" >> $GITHUB_ENV
 
 
         
