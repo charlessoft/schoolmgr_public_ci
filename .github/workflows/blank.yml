@@ -595,7 +595,7 @@ jobs:
           # ---end
           
           # 麦小
-          echo "部署麦小"
+          echo "deploy"
           echo "docker_deploy md environment ======>"
           bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
           # bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/maixiao/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
@@ -607,16 +607,16 @@ jobs:
           # bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan_old/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
           # 观澜
-          echo "部署观澜小学"
-          echo "docker_deploy gl  environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # echo "部署观澜小学"
+          # echo "docker_deploy gl  environment ======>"
+          # bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/guanlan/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
-          # #------
+          # # #------
           
-          # 英才
-          echo "部署英才小学"
-          echo "docker_deploy yc  environment ======>"
-          bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/yingcai/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # # 英才
+          # echo "部署英才小学"
+          # echo "docker_deploy yc  environment ======>"
+          # bash ${WORK_ROOT_DIR}/myutils/schoolmgr/scripts/yingcai/docker_deploy.sh ${JENKINS_ENV_PATH} || CheckLastResult
 
 
 
