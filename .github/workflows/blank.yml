@@ -82,8 +82,8 @@ jobs:
         run: |
           pip install dding
           mkdir -p ~/.dding
-          dding_secret="${{ github.event.client_payload.secret || env.DEFAULT_DDING_SECRET }}"
-          dding_token="${{ github.event.client_payload.token || env.DEFAULT_DDING_TOKEN }}"
+          dding_secret="${{ github.event.client_payload.secret || secrets.DEFAULT_DDING_SECRET }}"
+          dding_token="${{ github.event.client_payload.token || secrets.DEFAULT_DDING_TOKEN }}"
           cat <<EOF > ~/.dding/config.json
           [
               {
@@ -100,8 +100,8 @@ jobs:
         run: |
           pip install dding
           New-Item -Path $HOME\.dding -ItemType Directory -Force
-          $dding_secret = "${{ github.event.client_payload.secret || env.DEFAULT_DDING_SECRET }}"
-          $dding_token = "${{ github.event.client_payload.token || env.DEFAULT_DDING_TOKEN }}"
+          $dding_secret = "${{ github.event.client_payload.secret || secrets.DEFAULT_DDING_SECRET }}"
+          $dding_token = "${{ github.event.client_payload.token || secrets.DEFAULT_DDING_TOKEN }}"
           $config = @"
           [
               {
@@ -396,8 +396,8 @@ jobs:
         run: |
           pip install dding
           mkdir -p ~/.dding
-          dding_secret="${{ github.event.client_payload.secret || env.DEFAULT_DDING_SECRET }}"
-          dding_token="${{ github.event.client_payload.token || env.DEFAULT_DDING_TOKEN }}"
+          dding_secret="${{ github.event.client_payload.secret || secrets.DEFAULT_DDING_SECRET }}"
+          dding_token="${{ github.event.client_payload.token || secrets.DEFAULT_DDING_TOKEN }}"
           cat <<EOF > ~/.dding/config.json
           [
               {
@@ -629,8 +629,8 @@ jobs:
       - name: Send dingding notify error
         uses: zcong1993/actions-ding@master
         with:
-          dingToken: ${{ github.event.client_payload.token }} #钉钉token
-          secret: ${{ github.event.client_payload.secret }}
+          dingToken: ${{ github.event.client_payload.token || secrets.DEFAULT_DDING_TOKEN }} #钉钉token
+          secret: ${{ github.event.client_payload.secret || secrets.DEFAULT_DDING_SECRET }}
           body: |
             {
               "msgtype": "text",
@@ -649,8 +649,8 @@ jobs:
       - name: Send dingding notify success
         uses: zcong1993/actions-ding@master
         with:
-          dingToken: ${{ github.event.client_payload.token }} #钉钉token
-          secret: ${{ github.event.client_payload.secret }}
+          dingToken: ${{ github.event.client_payload.token || secrets.DEFAULT_DDING_TOKEN }} #钉钉token
+          secret: ${{ github.event.client_payload.secret || secrets.DEFAULT_DDING_SECRET }}
           body: |
             {
              "msgtype": "text",
